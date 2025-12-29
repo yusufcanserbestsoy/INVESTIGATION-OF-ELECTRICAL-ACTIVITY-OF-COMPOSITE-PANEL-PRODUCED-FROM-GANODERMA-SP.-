@@ -1,0 +1,76 @@
+
+    raw_signal = classicalmusic{:, 2}; 
+
+    processed_signal = raw_signal;
+%Eğer mantarın o anki gerçek voltaj seviyesini (örneğin 200 mV gibi) görmek
+% istiyorsan, kodu şöyle değiştirmelisin:
+    % processed_signal = detrend(raw_signal);  <-- Bunu iptal et
+%processed_signal = raw_signal;             <-- Bunu yaz
+
+% 2. Filtreleme 
+% Gürültülü sinyalin peak'i bulunmaz, temiz sinyalin peak'i bulunur.
+Fs = 1; 
+fc = 0.05; 
+order = 4;
+[b, a] = butter(order, fc/(Fs/2), 'low');
+clean_signal = filtfilt(b, a, processed_signal);
+
+% Zaman vektörü (Dakika)
+t_sec = (0:length(clean_signal)-1) / Fs;
+t_min = t_sec / 60;
+
+% 3. İSTATİSTİKSEL HESAPLAMALAR
+
+% A. Ortalama Değerler (Mean & RMS)
+mean_val = mean(clean_signal);       % Aritmetik Ortalama
+rms_val = rms(clean_signal);         % Etkin Değer (Root Mean Square)
+std_dev = std(clean_signal);         % Standart Sapma (Değişkenlik miktarı)
+
+% B. Uç Değerler (Global Max/Min)
+[max_val, max_idx] = max(clean_signal); % En yüksek nokta
+[min_val, min_idx] = min(clean_signal); % En düşük nokta
+p2p_val = max_val - min_val;            % Peak-to-Peak (Tepeden tepeye fark)
+
+% 4. LOKAL PEAK (TEPE) NOKTALARINI BULMA
+% Sinyalin içindeki dalgalanmaların tepelerini bulur.
+% 'MinPeakProminence': Sadece belirgin tepeleri al, minik titreşimleri alma.
+
+
+[pks, locs] = findpeaks(clean_signal, ...
+                        'MinPeakProminence', 0.0005, ... 
+                        'MinPeakDistance', 60); % En az 60 saniye arayla peak ara
+
+% 5. SONUÇLARI YAZDIRMA (Command Window)
+fprintf('------------------------------------------------\n');
+fprintf('SIGNAL STATISTICS REPORT\n');
+fprintf('------------------------------------------------\n');
+fprintf('Mean Value:              %.6f V\n', mean_val);
+fprintf('RMS Value:               %.6f V\n', rms_val);
+fprintf('Standard Deviation (Std):%.6f V\n', std_dev);
+fprintf('------------------------------------------------\n');
+fprintf('Maximum Value (Max):     %.6f V (Time: %.2f min)\n', max_val, t_min(max_idx));
+fprintf('Minimum Value (Min):     %.6f V (Time: %.2f min)\n', min_val, t_min(min_idx));
+fprintf('Peak-to-Peak (P2P):      %.6f V\n', p2p_val);
+fprintf('------------------------------------------------\n');
+fprintf('Number of Detected Local Peaks: %d \n', length(pks));
+
+% 6. GÖRSELLEŞTİRME
+figure('Name', 'Peak and Mean Analysis', 'Color', 'white');
+plot(t_min, clean_signal, 'b', 'LineWidth', 1.5); hold on;
+
+% Ortalamayı çiz (Yeşil Kesikli Çizgi)
+yline(mean_val, '--g', 'Mean', 'LineWidth', 2);
+
+% Maksimum ve Minimumu işaretle
+plot(t_min(max_idx), max_val, 'r^', 'MarkerSize', 10, 'MarkerFaceColor', 'r'); % Max (Red Triangle)
+plot(t_min(min_idx), min_val, 'rv', 'MarkerSize', 10, 'MarkerFaceColor', 'r'); % Min (Red Inverted Triangle)
+
+% Lokal Peak'leri işaretle (Turuncu Daireler)
+% findpeaks zamanı index olarak verir, onu dakikaya çevirmeliyiz:
+plot(t_min(locs), pks, 'o', 'MarkerSize', 6, 'MarkerEdgeColor', 'k', 'MarkerFaceColor', [1 0.5 0]);
+
+title('Signal Analysis: Peak Values and Mean');
+xlabel('Time (Minutes)');
+ylabel('Amplitude (Volts)');
+legend('Signal', 'Mean', 'Max Point', 'Min Point', 'Local Peaks');
+grid on;
