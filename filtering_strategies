@@ -1,0 +1,49 @@
+raw_signal = classicalmusic{:, 2}; 
+
+Fs = 1; % Örnekleme Frekansı (1 Hz)
+t = (0:length(raw_signal)-1) / Fs; % Zaman ekseni (saniye)
+N = length(raw_signal);       % Toplam veri sayısı
+t_min = (0:N-1) / 60;         % Saniyeleri dakikaya çevir (0, 0.016, ... 1, 1.016 ...)
+
+% YÖNTEM 1: Moving Average (Yumuşatma)
+% Pencere genişliği ne kadar artarsa grafik o kadar düzleşir.
+window_size = 30; % 30 saniyelik ortalama alır
+signal_smooth = smoothdata(raw_signal, 'movmean', window_size);
+
+% YÖNTEM 2: Butterworth Low-Pass Filtre (Mühendislik Tipi)
+% Amaç: Yüksek frekanslı "cızırtıyı" atıp sadece yavaş dalgaları bırakmak.
+
+fc = 0.05; % Kesim Frekansı (Cut-off Frequency) Hz
+% 0.05 Hz üzerindeki her şeyi gürültü kabul et ve sil dedik.
+% (Senin sinyalin yavaş olduğu için bu değer mantıklı)
+
+order = 4; % Filtre derecesi (Keskinlik)
+[b, a] = butter(order, fc/(Fs/2), 'low'); % Filtre katsayılarını üret
+
+% filtfilt kullanıyoruz çünkü faz kaymasını (gecikmeyi) önler
+signal_butter = filtfilt(b, a, raw_signal);
+
+% 3. Karşılaştırmalı Çizim
+figure('Name', 'Filtering Results', 'NumberTitle', 'off');
+
+% Üst Grafik: Ham Veri vs Yumuşatılmış (Moving Avg)
+subplot(2,1,1);
+plot(t_min, raw_signal, 'Color', [0.8 0.8 0.8], 'DisplayName', 'Raw Data (Noise)');
+hold on;
+plot(t_min, signal_smooth, 'b', 'LineWidth', 1.5, 'DisplayName', 'Moving Average (Smooth)');
+title('Method 1: Moving Average');
+xlabel('Time (min)');
+ylabel('Voltage (V)');
+legend show;
+grid on;
+
+% Alt Grafik: Ham Veri vs Butterworth Filtresi
+subplot(2,1,2);
+plot(t_min, raw_signal, 'Color', [0.8 0.8 0.8], 'DisplayName', 'Raw Data');
+hold on;
+plot(t_min, signal_butter, 'r', 'LineWidth', 1.5, 'DisplayName', 'Butterworth Low-Pass (0.05 Hz)');
+title('Method 2: Butterworth Low-Pass Filter');
+xlabel('Time (min)');
+ylabel('Voltage (V)');
+legend show;
+grid on;
