@@ -1,0 +1,80 @@
+
+
+% Veri 2. sütunda görünüyor (Function: ACV), zaman 1. sütunda.
+% Tablonun 2. sütununu sayısal diziye (array) çevirelim.
+raw_signal = signal_butter; 
+
+% Eksik veri (NaN) varsa temizleyelim (sıfır veya ortalama ile doldurabiliriz)
+% Burada lineer enterpolasyon ile dolduruyoruz:
+%raw_signal = fillmissing(raw_signal, 'linear');
+
+% 2. Parametreler
+Fs = 1; % Veri saniyelik olduğu için Örnekleme Frekansı 1 Hz
+dk_per_segment = 15; % Parça uzunluğu (dakika)
+seg_len = dk_per_segment * 60 * Fs; % Bir parçadaki veri sayısı (900)
+
+total_samples = length(raw_signal);
+num_segments = floor(total_samples / seg_len);
+
+fprintf('Toplam Veri Uzunluğu: %d örnek\n', total_samples);
+fprintf('Her Parça: %d örnek (%d dakika)\n', seg_len, dk_per_segment);
+fprintf('Oluşturulacak Parça Sayısı: %d\n', num_segments);
+
+% 3. Döngü, FFT ve Çizim
+figure('Name', '15 Dakikalık Parçaların Fourier Analizi', 'NumberTitle', 'off');
+
+% Renk paleti oluşturalım (grafiklerin karışmaması için)
+colors = parula(num_segments); 
+
+for i = 1:num_segments
+    % A. Parçayı Kesip Alalım
+    idx_start = (i-1) * seg_len + 1;
+    idx_end = i * seg_len;
+    
+    segment_data = raw_signal(idx_start:idx_end);
+    
+    % B. FFT İşlemi (DC bileşeni yani 0 Hz'i filtreleyelim - opsiyonel)
+    segment_data_detrend = detrend(segment_data); % Sinyalin ortalamasını 0 yapar (DC offset siler)
+    
+    L = length(segment_data_detrend);
+    Y = fft(segment_data_detrend);
+    
+    % Tek taraflı spektrum (Single-Sided Amplitude Spectrum)
+    P2 = abs(Y/L);
+    P1 = P2(1:floor(L/2)+1);
+    P1(2:end-1) = 2*P1(2:end-1);
+    
+    % Frekans vektörü
+    f = Fs * (0:(floor(L/2))) / L;
+    
+    % C. Çizim (Subplot ile alt alta veya hold on ile üst üste)
+    % Her birini ayrı görmek istersen subplot kullanabilirsin. 
+    % Burada karşılaştırma için hepsini aynı grafikte çiziyorum:
+    
+    subplot(num_segments, 1, 2*i - 1);
+plot(f, P1, 'Color', colors(i,:), 'LineWidth', 1.5);
+
+start_min_on = (i-1)*30;
+end_min_on   = start_min_on + 15;
+
+title(sprintf('Işık Açık (Dakika: %d-%d)', start_min_on, end_min_on));
+xlabel('Frekans (Hz)');
+ylabel('|P1(f)|');
+grid on;
+
+% --- IŞIK KAPALI (çift subplotlar) ---
+subplot(num_segments, 1, 2*i);
+plot(f, P1, 'Color', colors(i,:), 'LineWidth', 1.5);
+
+start_min_off = end_min_on;
+end_min_off   = i*30;
+
+title(sprintf('Işık Kapalı (Dakika: %d-%d)', start_min_off, end_min_off));
+xlabel('Frekans (Hz)');
+ylabel('|P1(f)|');
+grid on;
+    % Frekans aralığını sınırla (Örnek: 0 ile 0.5 Hz arası anlamlıdır çünkü Fs=1)
+    xlim([0 0.5]); 
+end
+
+sgtitle('15 Dakikalık Işık Açık- Kapalı Fourier Analiz Sonuçları');
