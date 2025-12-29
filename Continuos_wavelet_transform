@@ -1,0 +1,53 @@
+raw_signal = classicalmusic{:, 2}; 
+
+
+% 2. Pre-Filtering (Low-Pass)
+% Since CWT is sensitive to noise, pre-attenuating noise yields better results.
+Fs = 1; % Sampling Frequency (1 Hz)
+fc = 0.05; % Cut-off Frequency (0.05 Hz) - Can be adjusted to 0.1 Hz if needed.
+order = 4;
+[b, a] = butter(order, fc/(Fs/2), 'low');
+
+% Zero-phase filtering (Prevents phase distortion)
+clean_signal = filtfilt(b, a, raw_signal);
+
+% Time vector (in Minutes)
+t_sec = (0:length(clean_signal)-1) / Fs;
+t_min = t_sec / 60; 
+
+% 3. CONTINUOUS WAVELET TRANSFORM (CWT)
+% The 'amor' (Analytic Morlet) wavelet is optimal for bio-signals.
+% It provides a balanced resolution in both time and frequency domains.
+figure('Name', 'CWT Time-Frequency Analysis', 'Color', 'white', 'Position', [100 100 1000 600]);
+
+% CWT Calculation and Plotting
+% MATLAB's modern cwt function automatically generates a 'Scalogram'.
+[cfs, f] = cwt(clean_signal, Fs, 'amor'); 
+
+% Manual Plotting (For more controlled visualization)
+% Plotting energy magnitude using a surface plot (pcolor).
+surface(t_min, f, abs(cfs));
+shading interp; % Smooth color transitions
+axis tight;
+colormap(jet); % 'jet' or 'turbo' colormap (Red = High Energy)
+h = colorbar;
+ylabel(h, 'Energy Density (Magnitude)');
+
+% 4. Plot Settings and Zoom
+title('CWT Scalogram: Time-Frequency Map of Classical Music');
+xlabel('Time (Minutes)');
+ylabel('Frequency (Hz)');
+
+% CRITICAL POINT: Zooming the Y-axis (Frequency) to the 0-0.05 Hz range.
+% This is where the relevant physiological activity occurs.
+ylim([0 0.05]); % (Setting to [0 0.01] would provide a closer view)
+
+% You can also restrict the time axis if desired
+%xlim([0 15]); % E.g.: Show only the first 15 minutes
+
+set(gca, 'FontSize', 12);
+grid on;
+
+% 5. Result Interpretation
+disp('Processing complete.');
+disp('RED regions in the graph indicate strong fungal response at that specific minute.');
