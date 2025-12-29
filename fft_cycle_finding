@@ -1,0 +1,70 @@
+raw_signal = signal_smooth; 
+
+% 2. Parametreler
+Fs = 1; 
+dk_on = 15; 
+dk_off = 15; 
+
+len_on = dk_on * 60 * Fs;  
+len_off = dk_off * 60 * Fs; 
+cycle_len = len_on + len_off; 
+
+total_samples = length(raw_signal);
+num_cycles = floor(total_samples / cycle_len);
+
+% 3. Superimposition (Overlay) Plotting
+figure('Name', 'Light On vs Off Cycles', 'Color', 'white');
+
+% How many cycles to plot? (Plotting all would elongate the figure, so plot the first 4)
+plot_limit = min(num_cycles, 4); 
+
+for i = 1:plot_limit
+    
+    % --- Data Segmentation ---
+    cycle_start = (i-1) * cycle_len + 1;
+    
+    % Light ON Segment
+    data_on = raw_signal(cycle_start : cycle_start + len_on - 1);
+    
+    % Light OFF Segment
+    data_off = raw_signal(cycle_start + len_on : cycle_start + len_on + len_off - 1);
+    
+    % --- FFT Calculation ---
+    [f_on, P1_on] = calc_fft(data_on, Fs);
+    [f_off, P1_off] = calc_fft(data_off, Fs);
+    
+    % --- PLOTTING (TWO SIGNALS IN ONE SUBPLOT) ---
+    subplot(plot_limit, 1, i); % One row per cycle
+    
+    % Plot Signal 1 (Light On - Red)
+    plot(f_on, P1_on, 'r', 'LineWidth', 1.5); 
+    hold on; % <--- CRITICAL COMMAND: Hold the current graph, do not clear it!
+    
+    % Plot Signal 2 (Light Off - Blue - Dashed)
+    plot(f_off, P1_off, 'b--', 'LineWidth', 1.2); 
+    
+    % Plot Aesthetics
+    title(sprintf('Cycle %d Comparison (Red: Light ON | Blue: Light OFF)', i));
+    ylabel('Amplitude');
+    legend('Light ON', 'Light OFF', 'Location', 'northeast'); % Legend for identification
+    grid on;
+    
+    % Zoom (Focus on the significant frequency range)
+    xlim([0 0.1]); 
+    
+    % Add X-label only to the bottommost plot to avoid clutter
+    if i == plot_limit
+        xlabel('Frequency (Hz)');
+    end
+end
+
+% Helper Function
+function [f, P1] = calc_fft(signal, Fs)
+    sig_detrend = detrend(signal);
+    L = length(sig_detrend);
+    Y = fft(sig_detrend);
+    P2 = abs(Y/L);
+    P1 = P2(1:floor(L/2)+1);
+    P1(2:end-1) = 2*P1(2:end-1);
+    f = Fs * (0:(floor(L/2))) / L;
+end
