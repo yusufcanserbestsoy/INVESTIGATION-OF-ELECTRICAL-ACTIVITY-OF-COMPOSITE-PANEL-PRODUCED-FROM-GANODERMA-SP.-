@@ -3,7 +3,7 @@
 
     processed_signal = raw_signal;
 %Eğer mantarın o anki gerçek voltaj seviyesini (örneğin 200 mV gibi) görmek
-% istiyorsan, kodu şöyle değiştirmelisin:
+% istiyorsan, kodu şöyle değiştirmeliyiz:
     % processed_signal = detrend(raw_signal);  <-- Bunu iptal et
 %processed_signal = raw_signal;             <-- Bunu yaz
 
