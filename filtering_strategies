@@ -6,16 +6,14 @@ N = length(raw_signal);       % Toplam veri sayısı
 t_min = (0:N-1) / 60;         % Saniyeleri dakikaya çevir (0, 0.016, ... 1, 1.016 ...)
 
 % YÖNTEM 1: Moving Average (Yumuşatma)
-% Pencere genişliği ne kadar artarsa grafik o kadar düzleşir.
 window_size = 30; % 30 saniyelik ortalama alır
 signal_smooth = smoothdata(raw_signal, 'movmean', window_size);
 
-% YÖNTEM 2: Butterworth Low-Pass Filtre (Mühendislik Tipi)
-% Amaç: Yüksek frekanslı "cızırtıyı" atıp sadece yavaş dalgaları bırakmak.
+% YÖNTEM 2: Butterworth Low-Pass Filtre 
+
 
 fc = 0.05; % Kesim Frekansı (Cut-off Frequency) Hz
-% 0.05 Hz üzerindeki her şeyi gürültü kabul et ve sil dedik.
-% (Senin sinyalin yavaş olduğu için bu değer mantıklı)
+
 
 order = 4; % Filtre derecesi (Keskinlik)
 [b, a] = butter(order, fc/(Fs/2), 'low'); % Filtre katsayılarını üret
