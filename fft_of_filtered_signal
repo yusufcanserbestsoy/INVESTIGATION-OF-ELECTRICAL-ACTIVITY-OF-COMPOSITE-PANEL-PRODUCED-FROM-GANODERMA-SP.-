@@ -1,7 +1,6 @@
 
 
-% Veri 2. sütunda görünüyor (Function: ACV), zaman 1. sütunda.
-% Tablonun 2. sütununu sayısal diziye (array) çevirelim.
+
 raw_signal = signal_butter; 
 
 % Eksik veri (NaN) varsa temizleyelim (sıfır veya ortalama ile doldurabiliriz)
@@ -27,7 +26,7 @@ figure('Name', '15 Dakikalık Parçaların Fourier Analizi', 'NumberTitle', 'off
 colors = parula(num_segments); 
 
 for i = 1:num_segments
-    % A. Parçayı Kesip Alalım
+    % A. Parçayı Kesip Aldık
     idx_start = (i-1) * seg_len + 1;
     idx_end = i * seg_len;
     
@@ -48,8 +47,6 @@ for i = 1:num_segments
     f = Fs * (0:(floor(L/2))) / L;
     
     % C. Çizim (Subplot ile alt alta veya hold on ile üst üste)
-    % Her birini ayrı görmek istersen subplot kullanabilirsin. 
-    % Burada karşılaştırma için hepsini aynı grafikte çiziyorum:
     
     subplot(num_segments, 1, 2*i - 1);
 plot(f, P1, 'Color', colors(i,:), 'LineWidth', 1.5);
@@ -73,7 +70,7 @@ title(sprintf('Işık Kapalı (Dakika: %d-%d)', start_min_off, end_min_off));
 xlabel('Frekans (Hz)');
 ylabel('|P1(f)|');
 grid on;
-    % Frekans aralığını sınırla (Örnek: 0 ile 0.5 Hz arası anlamlıdır çünkü Fs=1)
+    % Frekans aralığını sınırladık (Örnek: 0 ile 0.5 Hz arası anlamlıdır çünkü Fs=1)
     xlim([0 0.5]); 
 end
 
